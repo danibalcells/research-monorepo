@@ -1,3 +1,5 @@
 *.ipynb_checkpoints
 *.sw*
 openai_secret_key
+notion_secret_key
+.DS_Store
