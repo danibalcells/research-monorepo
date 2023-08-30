@@ -9,11 +9,10 @@ import mapping
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
 
 bot = telebot.TeleBot(BOT_TOKEN)
-allowed_users = [
-    'danibalcells',
-    'cheriehu42',
-    'ajflores1604',
-]
+ALLOWED_USERS_FILE = 'allowed_users'
+with open(ALLOWED_USERS_FILE) as f:
+    allowed_users = [l.strip() for l in f.readlines()]
+
 controllers = {}
 
 
@@ -23,6 +22,39 @@ def request_location(message):
     markup.add(itembtn1)
     bot.send_message(message.chat.id, "Please, share your location to continue.", reply_markup=markup)
 
+
+# Handler for adding a user
+@bot.message_handler(commands=['adduser'])
+def add_user(message):
+    username = message.from_user.username
+    if username == 'danibalcells':
+        new_username = message.text.split()[-1] 
+        if new_username.startswith('@'):
+            new_username = new_username[1:] 
+        if new_username not in allowed_users:
+            allowed_users.append(new_username)
+            with open(ALLOWED_USERS_FILE, 'a') as f:
+                f.write(f"{new_username}")
+            bot.reply_to(message, f"User @{new_username} added successfully!")
+        else:
+            bot.reply_to(message, f"User @{new_username} is already in the allowed list.")
+
+# Handler for removing a user
+@bot.message_handler(commands=['removeuser'])
+def remove_user(message):
+    username = message.from_user.username
+    if username == 'danibalcells':
+        remove_username = message.text.split()[-1]
+        if remove_username.startswith('@'):
+            remove_username = remove_username[1:]  
+        if remove_username in allowed_users:
+            allowed_users.remove(remove_username)
+            with open(ALLOWED_USERS_FILE, 'w') as f:
+                for user in allowed_users:
+                    f.write(f"{user}\n")
+            bot.reply_to(message, f"User @{remove_username} removed successfully!")
+        else:
+            bot.reply_to(message, f"User @{remove_username} is not in the allowed list.")
 
 @bot.message_handler(content_types=['location'])
 @bot.message_handler(func=lambda msg: True)
@@ -66,7 +98,6 @@ def handle(message):
 
             ai_response = f"{question}\n{map_link}\n"
             bot.send_message(chat_id=message.from_user.id, text=ai_response)
-
 
 if __name__ == '__main__':
     bot.infinity_polling()
