@@ -56,6 +56,7 @@ def remove_user(message):
         else:
             bot.reply_to(message, f"User @{remove_username} is not in the allowed list.")
 
+
 @bot.message_handler(content_types=['location'])
 @bot.message_handler(func=lambda msg: True)
 def handle(message):
@@ -75,6 +76,7 @@ def handle(message):
         lat = message.location.latitude
         lng = message.location.longitude
         controller.initial_location = mapping.snap_to_road(lat, lng)
+        controller.locations_by_question = {}
         bot.send_message(chat_id=message.from_user.id, text="What's on your mind?")
         return
 
@@ -85,19 +87,41 @@ def handle(message):
         return
     
     if message.text:
+        center = None
+        if message.reply_to_message is not None:
+            replied_message_id = message.reply_to_message.message_id
+            center = controller.locations_by_question.get(replied_message_id)
+        if center is None:
+            center = controller.initial_location
+
+        if hasattr(controller, 'prev_point'):
+            blocked_point = controller.prev_point
+        else:
+            blocked_point = None
+
         controller.responses.append(message.text)
         follow_up_questions = controller.get_questions(message.text)
 
+        reply = bot.send_message(
+            chat_id=message.from_user.id, 
+            text='Please reply (swipe left) to one of the questions below.')
         for question in follow_up_questions:
             new_lat, new_lng = mapping.generate_random_point(
-                controller.initial_location[0], 
-                controller.initial_location[1], 
-                300, 500)
+                center[0], 
+                center[1], 
+                200, 350,
+                blocked_point
+            )
             snapped_lat, snapped_lng = mapping.snap_to_road(new_lat, new_lng)
             map_link = mapping.get_map_link(snapped_lat, snapped_lng)
 
             ai_response = f"{question}\n{map_link}\n"
-            bot.send_message(chat_id=message.from_user.id, text=ai_response)
+            reply = bot.send_message(chat_id=message.from_user.id, 
+                                     text=ai_response)
+            controller.locations_by_question[reply.message_id] = (
+                snapped_lat,
+                snapped_lng)
+            controller.prev_point = (snapped_lat, snapped_lng)
 
 if __name__ == '__main__':
     bot.infinity_polling()
