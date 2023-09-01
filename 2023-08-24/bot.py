@@ -109,7 +109,7 @@ def handle(message):
             new_lat, new_lng = mapping.generate_random_point(
                 center[0], 
                 center[1], 
-                200, 350,
+                150, 200,
                 blocked_point
             )
             snapped_lat, snapped_lng = mapping.snap_to_road(new_lat, new_lng)
