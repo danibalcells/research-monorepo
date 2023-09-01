@@ -109,7 +109,7 @@ def handle(message):
             new_lat, new_lng = mapping.generate_random_point(
                 center[0], 
                 center[1], 
-                150, 200,
+                250, 300,
                 blocked_point
             )
             snapped_lat, snapped_lng = mapping.snap_to_road(new_lat, new_lng)
@@ -121,7 +121,7 @@ def handle(message):
             controller.locations_by_question[reply.message_id] = (
                 snapped_lat,
                 snapped_lng)
-            controller.prev_point = (snapped_lat, snapped_lng)
+        controller.prev_point = center
 
 if __name__ == '__main__':
     bot.infinity_polling()
