@@ -4,8 +4,14 @@ from question import Question
 
 class MTMController:
 
-    def __init__(self, verbose=True):
+    def __init__(self, interface=None, verbose=True):
         self.verbose = verbose
+        self.chain = MyChain(verbose=self.verbose)
+        self.questions = []
+        self.responses = []
+        self.interface = interface
+
+    def restart(self):
         self.chain = MyChain(verbose=self.verbose)
         self.questions = []
         self.responses = []
@@ -19,7 +25,7 @@ class MTMController:
             self.responses.append(human_input)
 
     def get_initial_question(self):
-        question = input("What's on your mind?\n")
+        question = self.interface.input("What's on your mind")
         self.initial_question = question
         return question
 
@@ -29,8 +35,20 @@ class MTMController:
 
     def get_answer(self, next_questions):
         for q in next_questions:
-            print(q)
-        answer = input(
+            self.interface.output(q)
+        answer = self.interface.input(
             "\nPlease enter your answer to one of the questions above.\n"
         )
         return answer
+
+
+class ConsoleInterface:
+
+    def __init__(self):
+        pass
+
+    def output(self, message):
+        print(message)
+
+    def input(self, prompt=None):
+        return input(prompt)
